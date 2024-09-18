@@ -1,30 +1,12 @@
 # Load module
 import json
 import torch
-from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline
-
-# Use a pipeline as a high-level helper
-from transformers import pipeline
-
-pipe = pipeline("text-generation", model="openai-community/gpt2")
-
-# Load model directly
-from transformers import AutoTokenizer, AutoModelForCausalLM
-
-tokenizer = AutoTokenizer.from_pretrained("openai-community/gpt2")
-model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2")
+from transformers import AutoModelForQuestionAnswering, AutoTokenizer, pipeline, AutoModelForCausalLM
 
 def read_json_file(file_path):
     with open(file_path, 'r') as f:
         data = json.load(f)
     return data
-
-
-def call_model_tokenize(model_name):
-    model = AutoModelForQuestionAnswering.from_pretrained(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    return model, tokenizer
-
 
 def get_context_from_id(sgk, id_qa):
     subject = id_qa[0]
@@ -56,7 +38,7 @@ def run_model(model_name, tokenizer, sgk, qas, device, subject):
         if subject == id_qa[0] and id_qa in l_id_error:
             question = qas[id_qa]['question']
             context = get_context_from_id(sgk, id_qa)
-            pipe = pipeline('question-answering', model = model_name, tokenizer = tokenizer, device = device)
+            pipe = pipeline('text-generation', model = model_name, tokenizer = tokenizer, device = device)
             try:
                 output_model = pipe(question, context) # {'score', 'start', 'end', 'answer'}
                 dict_output[id_qa] = output_model
@@ -77,9 +59,10 @@ if __name__ == '__main__':
     subject = 'S'
     
     device = torch.device("cuda:0")
-    model_name = "bhavikardeshna/xlm-roberta-base-vietnamese"
+    model_name = "openai-community/gpt2"
     
-    model, tokenizer = call_model_tokenize(model_name)
+    tokenizer = AutoTokenizer.from_pretrained("openai-community/gpt2")
+    model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2")
     dict_output = run_model(model_name, tokenizer, sgk, qas, device, subject)
     
     output_file_name = f'output_{subject}_xlm-r_1.json'
